@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Reflection.Metadata;
 using System.Xml.Linq;
 
 namespace ConsoleApp10
@@ -51,6 +52,17 @@ namespace ConsoleApp10
                 }
             }
 
+        }
+        static void GotoDungeon()
+        {
+            int[] dungeonInfo = new int[] 
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("스파르타 던전에 오신것을 환영합니다.\n\n1.쉬움 던전\n2.일반 던전\n3.어려움 던전\n");
+
+            }
+            
         }
         static void ShopScene(Character character)
         {
@@ -253,9 +265,40 @@ namespace ConsoleApp10
         {
             public int itemCode;
             public string name;
-            public int job, level = 1, hp = 100, atk = 10, def = 5, money = 1000;
+            private int  level = 1;
+            public int job, hp = 100, money = 1000;
+            public float atk =10, def =5;
             public List<int> inventory = new List<int>{5};
             public int[] equipment = { 0, -1, -1, 8, -1 };
+            private int exp = 0;
+
+            public int Level
+            {
+                get { return level; }
+                set
+                {
+                    level = value;
+                    UpdateState();
+                }
+            }
+            public int Exp
+            {
+                get { return exp; }
+                set
+                {
+                    exp = value;
+                    UpdateLevel();
+                }
+            }
+            private void UpdateState()
+            {
+                atk = 10 + ((level-1) * 0.5f);
+                def = 5 + ((level - 1) * 1);
+            }
+            private void UpdateLevel()
+            {
+                if (level <= exp) { Level++; exp = 0; }
+            }
         }
         
         static Character CreatCharacter()
@@ -327,7 +370,7 @@ namespace ConsoleApp10
                     PlusHp += itemsEquip[character.equipment[i]].hp;
                 }
             }
-            Console.WriteLine($"Lv. {character.level:D2}\n직업 :[{jobs[character.job - 1]}]");
+            Console.WriteLine($"Lv. {character.Level:D2}\n직업 :[{jobs[character.job - 1]}]");
             Console.WriteLine($"공격력 :{character.atk+plusAtk,-4}({character.atk}{plusAtk:+0;-0;+0})\n방어력 :{character.def + plusDef,-4}({character.def}{plusDef:+0;-0;+0})\n체력   :{character.hp+PlusHp,-4}({character.hp}{PlusHp:+0;-0;+0})");
             Console.Write($"Gold   :{character.money} G");
             Console.WriteLine("아무키 입력. 상태보기 종료");
