@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Xml.Linq;
 
@@ -47,20 +48,85 @@ namespace ConsoleApp10
                     case "1":ShowState(character);break;
                     case "2":InventoryScene(character); break;
                     case "3":ShopScene(character);break;
-                    case "4": { Console.WriteLine("현재 던전기능 미구현. 아무키입력 뒤로"); Console.ReadLine(); };break;
+                    case "4":GotoDungeon(character);break;
                     default: { WrongMassage(); continue; }
                 }
             }
 
         }
-        static void GotoDungeon()
+        struct DungeonInfo
         {
-            int[] dungeonInfo = new int[] 
+            public string name;
+            public int requirDef;
+            public int basicReward;
+        }
+        static DungeonInfo[] GetDungeonInfo()
+        {
+            DungeonInfo[] dungeonInfo = new DungeonInfo[3];
+            dungeonInfo[0] = new DungeonInfo { name = "쉬움 던전", requirDef = 5, basicReward = 1000 };
+            dungeonInfo[1] = new DungeonInfo { name = "일반 던전", requirDef = 10, basicReward = 1700 };
+            dungeonInfo[2] = new DungeonInfo { name = "어려움 던전", requirDef = 20, basicReward = 2500 };
+            return dungeonInfo;
+        }
+        static void GotoDungeon(Character character)
+        {
+            DungeonInfo[] dungeonInfo = GetDungeonInfo();
             while (true)
             {
                 Console.Clear();
-                Console.WriteLine("스파르타 던전에 오신것을 환영합니다.\n\n1.쉬움 던전\n2.일반 던전\n3.어려움 던전\n");
+                Console.WriteLine("스파르타 던전에 오신것을 환영합니다.");
+                for (int i = 0; i < dungeonInfo.GetLength(0); i++) { Console.WriteLine($"{i+1}. {dungeonInfo[i].name,-10} |권장 방어력 :{dungeonInfo[i].requirDef,-3}|기본 클리어 보상 :{dungeonInfo[i].basicReward}"); }
+                Console.WriteLine($"{dungeonInfo.Length+1}. 내 상태확인\n\n가고자하는 던전을 입력해주세요.     0.돌아가기");
+                string input;int inputInt;
+                while (true)
+                {
+                    input = Console.ReadLine();
+                    if (int.TryParse(input, out inputInt) && inputInt >= 0 && inputInt <= dungeonInfo.Length+1) break;
+                    WrongMassage();
+                }
+                if (inputInt == 0) break;
+                else if (inputInt == dungeonInfo.Length + 1) ShowState(character);
+                else
+                {
+                    Console.Clear() ;
+                    Console.WriteLine($"{dungeonInfo[inputInt-1].name,-10} |권장 방어력 :{dungeonInfo[inputInt-1].requirDef,-3}|기본 클리어 보상 :{dungeonInfo[inputInt-1].basicReward}");
+                    if (dungeonInfo[inputInt - 1].requirDef > character.totalDef) Console.WriteLine($"현재 방어력이 권장 방어력보다 낮습니다!! 현재 방어력 :{character.totalDef}   실패확률 40%");
+                    Console.WriteLine($"클리어 보상 :{(int)(dungeonInfo[inputInt - 1].basicReward * (1 + character.totalAtk / 100))}~{(int)(dungeonInfo[inputInt - 1].basicReward * (1 + 2 * character.totalAtk / 100))}");
+                    Console.WriteLine($"예상 체력 피해 :-{20 + (dungeonInfo[inputInt-1].requirDef - character.totalDef)}~-{35 + (dungeonInfo[inputInt-1].requirDef - character.totalDef)}");
+                    Console.WriteLine("해당 던전에 도전합니까?    1.예     2.아니오");
+                    while (true)
+                    {
+                        input= Console.ReadLine();
+                        if (input == "1" || input == "2") break;
+                        WrongMassage();
+                    }
+                    if(input == "1") //던전 입장
+                    {
+                        if(dungeonInfo[inputInt - 1].requirDef > character.totalDef)
+                        {
+                            Random random = new Random();
+                            if (random.Next(0, 10) < 4)
+                            {
+                                Console.WriteLine("던전도전에 실패하였습니다.");
+                                Console.WriteLine("체력이 반으로 줄었습니다.\n 아무키입력 .돌아가기");
+                                character.totalHp /= 2;
+                                Console.ReadLine();
+                            }
+                            else
+                            {
+                                Console.WriteLine("던전도전에 성공하였습니다.");
+                                character.Exp++;
+                                int reward = (int)(dungeonInfo[inputInt].basicReward + dungeonInfo[inputInt].basicReward * ((1 + (float)random.NextDouble()) * (character.totalAtk / 100)));
+                                int Damage= 20 + (dungeonInfo[inputInt].requirDef - character.totalDef) + random.Next(0, 16);
+                                Console.WriteLine($"보상을 얻었습니다. {reward} G\n체력을 잃었습니다. -{Damage}\n아무키 입력. 돌아가기");
+                                character.totalHp -= Damage;
+                                character.money += reward;
+                                Console.ReadLine();
+                            }
+                        }
+                    }
 
+                }
             }
             
         }
@@ -165,7 +231,7 @@ namespace ConsoleApp10
                             }
                             if (input2 == "2") { Console.WriteLine("구매를 취소합니다."); continue; }
                         }
-                        if (character.inventory.Contains(shopItemList[inputInt - 1]))
+                        if (character.Inventory.Contains(shopItemList[inputInt - 1]))
                         {
                             alreadyAsk = true;
                             Console.WriteLine("이미 가지고있는 아이템입니다. 구매하시겠습니까?\n1.예      2.아니오");
@@ -190,7 +256,7 @@ namespace ConsoleApp10
                             }
                             if (input2 == "2") { Console.WriteLine("구매를 취소합니다"); continue; }
                         }
-                        character.inventory.Add(shopItemList[inputInt - 1]); character.money -= itemsEquip[shopItemList[inputInt - 1]].price;
+                        character.Inventory.Add(shopItemList[inputInt - 1]); character.money -= itemsEquip[shopItemList[inputInt - 1]].price;
                         Console.WriteLine($"아이템을 구매하였습니다.\n남은 소지금 :{character.money}\n확인.아무키입력");
                         Console.ReadLine();
                     }
@@ -211,7 +277,7 @@ namespace ConsoleApp10
                     while (true)
                     {
                         input = Console.ReadLine();
-                        if (int.TryParse(input, out inputInt) && inputInt >= 0 && inputInt <= character.inventory.Count + equipNum) break;
+                        if (int.TryParse(input, out inputInt) && inputInt >= 0 && inputInt <= character.Inventory.Count + equipNum) break;
                         WrongMassage() ;
                     }
                     if (inputInt == 0) break;   //나가기
@@ -239,7 +305,7 @@ namespace ConsoleApp10
                     }
                     else
                     {
-                        serectedItemCode = character.inventory[inputInt - equipNum - 1];
+                        serectedItemCode = character.Inventory[inputInt - equipNum - 1];
                         Console.WriteLine($"\n{itemsEquip[serectedItemCode].name}    판매가 :{(int)(itemsEquip[serectedItemCode].price * 0.5)}\n해당 아이템을 판매하시겠습니까?\n1.예        2.아니오");
                         while (true)
                         {
@@ -248,7 +314,7 @@ namespace ConsoleApp10
                             WrongMassage();
                         }
                         if (input == "2") continue;
-                        else { character.inventory.RemoveAt(inputInt - equipNum - 1); } //인벤토리에서 아이템 제거
+                        else { character.Inventory.RemoveAt(inputInt - equipNum - 1); } //인벤토리에서 아이템 제거
 
                         character.money += (int)(itemsEquip[serectedItemCode].price * 0.5); //판매가 돈 획득
                     }
@@ -266,9 +332,10 @@ namespace ConsoleApp10
             public int itemCode;
             public string name;
             private int  level = 1;
-            public int job, hp = 100, money = 1000;
-            public float atk =10, def =5;
-            public List<int> inventory = new List<int>{5};
+            public int job, hp = 100,def =5, money = 1000;
+            public int totalDef=10, totalHp=150;
+            public float atk =10,totalAtk=15;
+            private List<int> inventory = new List<int>{5};
             public int[] equipment = { 0, -1, -1, 8, -1 };
             private int exp = 0;
 
@@ -290,10 +357,33 @@ namespace ConsoleApp10
                     UpdateLevel();
                 }
             }
+            public List<int> Inventory
+            {
+                get { return inventory; }
+                set
+                {
+                    inventory = value;
+                    UpdateState();
+                }
+            }
+
             private void UpdateState()
             {
                 atk = 10 + ((level-1) * 0.5f);
+                totalAtk = atk;
                 def = 5 + ((level - 1) * 1);
+                totalDef = def;
+                totalHp = hp;
+                for (int i = 0;i< equipment.Length; i++)
+                {
+                    if (equipment[i] != -1) 
+                    {
+                        totalAtk += itemsEquip[equipment[i]].atk;
+                        totalDef += itemsEquip[equipment[i]].def;
+                        totalHp += itemsEquip[equipment[i]].hp;
+                    }
+                }
+                
             }
             private void UpdateLevel()
             {
@@ -360,18 +450,10 @@ namespace ConsoleApp10
         {
             Console.Clear();
             string[] jobs = { "전사", "도적" };
-            int plusAtk=0, plusDef=0, PlusHp=0;
-            for (int i = 0; i < 5; i++)
-            {
-                if (character.equipment[i] != -1)
-                {
-                    plusAtk += itemsEquip[character.equipment[i]].atk;
-                    plusDef += itemsEquip[character.equipment[i]].def;
-                    PlusHp += itemsEquip[character.equipment[i]].hp;
-                }
-            }
             Console.WriteLine($"Lv. {character.Level:D2}\n직업 :[{jobs[character.job - 1]}]");
-            Console.WriteLine($"공격력 :{character.atk+plusAtk,-4}({character.atk}{plusAtk:+0;-0;+0})\n방어력 :{character.def + plusDef,-4}({character.def}{plusDef:+0;-0;+0})\n체력   :{character.hp+PlusHp,-4}({character.hp}{PlusHp:+0;-0;+0})");
+            Console.WriteLine($"공격력 :{character.totalAtk,-4}({character.atk}{(character.totalAtk - character.atk):+0;-0;+0})");
+            Console.WriteLine($"방어력 :{character.totalDef,-4}({character.def}{(character.totalDef - character.def):+0;-0;+0})");
+            Console.WriteLine($"체력   :{character.totalHp,-4}({character.hp}{(character.totalHp - character.hp):+0;-0;+0})");
             Console.Write($"Gold   :{character.money} G");
             Console.WriteLine("아무키 입력. 상태보기 종료");
             Console.ReadLine();
@@ -414,7 +496,7 @@ namespace ConsoleApp10
                             while (true)
                             {
                                 input = Console.ReadLine();
-                                if (int.TryParse(input, out chooseNum) && chooseNum <= equipNum + character.inventory.Count && chooseNum >= 0) break;
+                                if (int.TryParse(input, out chooseNum) && chooseNum <= equipNum + character.Inventory.Count && chooseNum >= 0) break;
                                 WrongMassage();
                             }
                             if (chooseNum != 0)
@@ -436,23 +518,23 @@ namespace ConsoleApp10
                                         for (int i = 0; i < 5; i++)
                                         {
                                             if (character.equipment[i] != -1) num++;
-                                            if (num == chooseNum) { character.inventory.Add(character.equipment[i]); character.equipment[i] = -1;break; }
+                                            if (num == chooseNum) { character.Inventory.Add(character.equipment[i]); character.equipment[i] = -1;break; }
                                         }
                                     }
                                     else //장착하기
                                     {
-                                        if (itemsEquip[character.inventory[chooseNum - equipNum - 1]].jobLimit.Contains(character.job) || itemsEquip[character.inventory[chooseNum - equipNum - 1]].jobLimit.Contains(0))
+                                        if (itemsEquip[character.Inventory[chooseNum - equipNum - 1]].jobLimit.Contains(character.job) || itemsEquip[character.Inventory[chooseNum - equipNum - 1]].jobLimit.Contains(0))
                                         {
-                                            if (character.equipment[itemsEquip[character.inventory[chooseNum - equipNum - 1]].equipType] != -1) //장비칸이 비어있지않다면
+                                            if (character.equipment[itemsEquip[character.Inventory[chooseNum - equipNum - 1]].equipType] != -1) //장비칸이 비어있지않다면
                                             {
-                                                character.inventory.Add(character.equipment[itemsEquip[character.inventory[chooseNum - equipNum - 1]].equipType]);
-                                                character.equipment[itemsEquip[character.inventory[chooseNum - equipNum - 1]].equipType] = character.inventory[chooseNum - equipNum - 1];
-                                                character.inventory.RemoveAt(chooseNum - equipNum - 1);
+                                                character.Inventory.Add(character.equipment[itemsEquip[character.Inventory[chooseNum - equipNum - 1]].equipType]);
+                                                character.equipment[itemsEquip[character.Inventory[chooseNum - equipNum - 1]].equipType] = character.Inventory[chooseNum - equipNum - 1];
+                                                character.Inventory.RemoveAt(chooseNum - equipNum - 1);
                                             }
                                             else
                                             {
-                                                character.equipment[itemsEquip[character.inventory[chooseNum - equipNum - 1]].equipType] = character.inventory[chooseNum - equipNum - 1];
-                                                character.inventory.RemoveAt(chooseNum - equipNum - 1);
+                                                character.equipment[itemsEquip[character.Inventory[chooseNum - equipNum - 1]].equipType] = character.Inventory[chooseNum - equipNum - 1];
+                                                character.Inventory.RemoveAt(chooseNum - equipNum - 1);
                                             }
                                         }
                                         else { Console.WriteLine("당신의 직업은 이 장비를 장착할 수 없습니다.(확인.아무키입력)"); Console.ReadLine(); }
@@ -483,10 +565,10 @@ namespace ConsoleApp10
                     PrintItem(itemsEquip[character.equipment[i]],isShop);
                 }
             }
-            for(int i = 0; i < character.inventory.Count; i++)
+            for(int i = 0; i < character.Inventory.Count; i++)
             {
                 Console.Write($"{i + equipNum + 1,-2}.");
-                PrintItem(itemsEquip[character.inventory[i]],isShop);
+                PrintItem(itemsEquip[character.Inventory[i]],isShop);
             }
 
         }
@@ -494,9 +576,9 @@ namespace ConsoleApp10
         {
             string[] jobLimit = { "공용", "전사착용가능", "도적착용가능" };
             string[] equipTypes = { "[주무기]", "[보조장비]", "[머리]", "[몸]", "[발]" };
-            Console.WriteLine($"-{item.name,-12}|{item.info}");
+            Console.WriteLine($"-{item.name,-10}|{item.info}");
             if (isShop) Console.Write($"   가격 :{item.price,5}G "); else Console.Write("     ");      //상점일때 가격표시
-            Console.Write($"{equipTypes[item.equipType],-6}|공격력 {item.atk,-5:+0;-0;0}|방어력 {item.def,-5:+0;-0;0}|체력 {item.hp,-5:+0;-0;0}");
+            Console.Write($"{equipTypes[item.equipType],-10}|공격력 {item.atk,-5:+0;-0;0}|방어력 {item.def,-5:+0;-0;0}|체력 {item.hp,-5:+0;-0;0}");
             for (int i = 0;i<item.jobLimit.Length;i++) { Console.Write($"[{jobLimit[item.jobLimit[i]]}]"); Console.WriteLine(); }
         }
     }
