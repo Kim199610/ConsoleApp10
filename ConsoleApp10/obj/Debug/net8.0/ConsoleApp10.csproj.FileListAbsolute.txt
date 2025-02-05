@@ -12,3 +12,4 @@ C:\Users\kk224\Desktop\Unity_Quest\ConsoleApp10\ConsoleApp10\obj\Debug\net8.0\re
 C:\Users\kk224\Desktop\Unity_Quest\ConsoleApp10\ConsoleApp10\obj\Debug\net8.0\ConsoleApp10.pdb
 C:\Users\kk224\Desktop\Unity_Quest\ConsoleApp10\ConsoleApp10\obj\Debug\net8.0\ConsoleApp10.genruntimeconfig.cache
 C:\Users\kk224\Desktop\Unity_Quest\ConsoleApp10\ConsoleApp10\obj\Debug\net8.0\ref\ConsoleApp10.dll
+C:\Users\kk224\Desktop\Unity_Quest\ConsoleApp10\ConsoleApp10\obj\Debug\net8.0\ConsoleApp10.sourcelink.json

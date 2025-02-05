@@ -116,8 +116,8 @@ namespace ConsoleApp10
                             {
                                 Console.WriteLine("던전도전에 성공하였습니다.");
                                 character.Exp++;
-                                int reward = (int)(dungeonInfo[inputInt].basicReward + dungeonInfo[inputInt].basicReward * ((1 + (float)random.NextDouble()) * (character.totalAtk / 100)));
-                                int Damage= 20 + (dungeonInfo[inputInt].requirDef - character.totalDef) + random.Next(0, 16);
+                                int reward = dungeonInfo[inputInt-1].basicReward + (int)((float)dungeonInfo[inputInt-1].basicReward * (1 + ((float)random.NextDouble() * (character.totalAtk / 100f))));
+                                int Damage = 20 + (dungeonInfo[inputInt-1].requirDef - character.totalDef) + random.Next(0, 16);
                                 Console.WriteLine($"보상을 얻었습니다. {reward} G\n체력을 잃었습니다. -{Damage}\n아무키 입력. 돌아가기");
                                 character.totalHp -= Damage;
                                 character.money += reward;
@@ -367,20 +367,17 @@ namespace ConsoleApp10
                 }
             }
 
-            private void UpdateState()
+            public void UpdateState()
             {
                 atk = 10 + ((level-1) * 0.5f);
-                totalAtk = atk;
                 def = 5 + ((level - 1) * 1);
-                totalDef = def;
-                totalHp = hp;
                 for (int i = 0;i< equipment.Length; i++)
                 {
                     if (equipment[i] != -1) 
                     {
-                        totalAtk += itemsEquip[equipment[i]].atk;
-                        totalDef += itemsEquip[equipment[i]].def;
-                        totalHp += itemsEquip[equipment[i]].hp;
+                        totalAtk = atk+itemsEquip[equipment[i]].atk;
+                        totalDef = def+itemsEquip[equipment[i]].def;
+                        totalHp = hp+itemsEquip[equipment[i]].hp;
                     }
                 }
                 
@@ -482,6 +479,7 @@ namespace ConsoleApp10
                 {
                     while (true)
                     {
+                        character.UpdateState();
                         Console.Clear();
                         ShowInventory(character,false);
                         Console.WriteLine("\n장착(해제)할 아이템을 선택해 주세요.\n0. 나가기\n");
