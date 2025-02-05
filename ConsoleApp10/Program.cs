@@ -46,7 +46,7 @@ namespace ConsoleApp10
                     case "1":ShowState(character);break;
                     case "2":InventoryScene(character); break;
                     case "3":ShopScene(character);break;
-                    case "4":ShowState(character);break;
+                    case "4": { Console.WriteLine("현재 던전기능 미구현. 아무키입력 뒤로"); Console.ReadLine(); };break;
                     default: { WrongMassage(); continue; }
                 }
             }
@@ -78,10 +78,11 @@ namespace ConsoleApp10
                     {
                         case "1": ShowShop(1); continue;
                         case "2": ShowShop(2); continue;
-                        case "3": ShowShop(3); continue;
+                        case "3": { Console.WriteLine("현재 잡화류 미구현, 아무키입력.뒤로"); Console.ReadLine(); }; continue;
                         default: break;
                     }
                 }
+                if (input == "2")   SellingItems();
                 
             }
             void ShowShop(int ItemType)
@@ -117,7 +118,7 @@ namespace ConsoleApp10
                 while (true)
                 {
                     Console.Clear();
-                    Console.WriteLine("구매를 원하시는 아이템을 선택하여 주세요.\n\n[아이템 목록]");
+                    Console.WriteLine($"구매를 원하시는 아이템을 선택하여 주세요.  현재 소지금 :{character.money} G\n\n[아이템 목록]");
                     for (int i = 0; i < shopItemList.Count; i++)
                     {
                         Console.Write($"{i + 1}. ");
@@ -142,7 +143,7 @@ namespace ConsoleApp10
                         if (!(itemsEquip[shopItemList[inputInt-1]].jobLimit.Contains(0) || itemsEquip[shopItemList[inputInt - 1]].jobLimit.Contains(character.job))) //착용직업제한 확인
                         { 
                             alreadyAsk=true;
-                            Console.WriteLine($"이 아이템{itemsEquip[shopItemList[inputInt-1]].name}은(는) 착용할 수 없는 직업입니다. 그래도 구매하시겠습니까?\n1.예        2.아니오");
+                            Console.WriteLine($"이 아이템 {itemsEquip[shopItemList[inputInt-1]].name}은(는) 착용할 수 없는 직업입니다. 그래도 구매하시겠습니까?\n1.예        2.아니오");
                             string input2;
                             while (true)
                             {
@@ -184,6 +185,65 @@ namespace ConsoleApp10
                     else { Console.WriteLine("구매에 필요한 골드가 부족합니다"); }
                 }
             }
+            void SellingItems()
+            {
+                while (true)
+                {
+                    int equipNum=0;
+                    for (int i = 0; i < 5; i++) if (character.equipment[i] != -1) equipNum++; //장착된 장비개수
+                    Console.Clear();
+                    Console.WriteLine("아이템을 판매합니다. (아이템 판매시 받는 금액은 가격의 50%)\n");
+                    ShowInventory(character, true);
+                    Console.WriteLine("판매할 아이템을 선택해주세요.     0.나가기");
+                    string input; int inputInt; int serectedItemCode;
+                    while (true)
+                    {
+                        input = Console.ReadLine();
+                        if (int.TryParse(input, out inputInt) && inputInt >= 0 && inputInt <= character.inventory.Count + equipNum) break;
+                        WrongMassage() ;
+                    }
+                    if (inputInt == 0) break;   //나가기
+                    else if (inputInt <= equipNum) //장비중인 아이템을 선택했을경우
+                    {
+                        int equiped=0; int i;
+                        for (i = 0; i < character.equipment.Length; i++)    //장착된 장비의 아이템코드찾기
+                        {
+                            if(character.equipment[i] != -1)
+                            {
+                                equiped++;
+                                if (equiped == inputInt) break;
+                            }
+                        }
+                        serectedItemCode = character.equipment[i];
+                        Console.WriteLine($"\n{itemsEquip[serectedItemCode].name}    판매가 :{(int)(itemsEquip[serectedItemCode].price*0.5)}\n해당 아이템은 장착중입니다. 해제하고 판매하시겠습니까?\n1.예        2.아니오");
+                        while (true)
+                        {
+                            input= Console.ReadLine();
+                            if (input == "1" || input == "2") break;
+                            WrongMassage();
+                        }
+                        if (input == "2") continue;
+                        else { character.equipment[i] = -1; }   //장비칸에서 아이템 제거
+                    }
+                    else
+                    {
+                        serectedItemCode = character.inventory[inputInt - equipNum - 1];
+                        Console.WriteLine($"\n{itemsEquip[serectedItemCode].name}    판매가 :{(int)(itemsEquip[serectedItemCode].price * 0.5)}\n해당 아이템을 판매하시겠습니까?\n1.예        2.아니오");
+                        while (true)
+                        {
+                            input = Console.ReadLine();
+                            if (input == "1" || input == "2") break;
+                            WrongMassage();
+                        }
+                        if (input == "2") continue;
+                        else { character.inventory.RemoveAt(inputInt - equipNum - 1); } //인벤토리에서 아이템 제거
+
+                        character.money += (int)(itemsEquip[serectedItemCode].price * 0.5); //판매가 돈 획득
+                    }
+                }
+            }
+
+
         }
         static void WrongMassage()
         {
@@ -376,7 +436,7 @@ namespace ConsoleApp10
                 if (character.equipment[i] != -1)
                 {
                     equipNum++;
-                    Console.Write($"{equipNum,-2}[E] ");
+                    Console.Write($"{equipNum,-2}.[E] ");
                     PrintItem(itemsEquip[character.equipment[i]],isShop);
                 }
             }
@@ -392,7 +452,7 @@ namespace ConsoleApp10
             string[] jobLimit = { "공용", "전사착용가능", "도적착용가능" };
             string[] equipTypes = { "[주무기]", "[보조장비]", "[머리]", "[몸]", "[발]" };
             Console.WriteLine($"-{item.name,-12}|{item.info}");
-            if (isShop) Console.Write($"   가격 :{item.price,5}G"); else Console.Write("     ");      //상점일때 가격표시
+            if (isShop) Console.Write($"   가격 :{item.price,5}G "); else Console.Write("     ");      //상점일때 가격표시
             Console.Write($"{equipTypes[item.equipType],-6}|공격력 {item.atk,-5:+0;-0;0}|방어력 {item.def,-5:+0;-0;0}|체력 {item.hp,-5:+0;-0;0}");
             for (int i = 0;i<item.jobLimit.Length;i++) { Console.Write($"[{jobLimit[item.jobLimit[i]]}]"); Console.WriteLine(); }
         }
