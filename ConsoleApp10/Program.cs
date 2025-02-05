@@ -137,9 +137,12 @@ namespace ConsoleApp10
                     
                     if (character.money >= itemsEquip[shopItemList[inputInt - 1]].price) //가격지불가능 여부 확인
                     {
+                        bool alreadyAsk=false;
+                        Console.WriteLine($"현재소지금 :{character.money} G      아이템 가격 :{itemsEquip[shopItemList[inputInt-1]].price}");
                         if (!(itemsEquip[shopItemList[inputInt-1]].jobLimit.Contains(0) || itemsEquip[shopItemList[inputInt - 1]].jobLimit.Contains(character.job))) //착용직업제한 확인
                         { 
-                            Console.WriteLine($"이 아이템{itemsEquip[shopItemList[inputInt-1]]}은(는) 착용할 수 없는 직업입니다. 그래도 구매하시겠습니까?\n1.예        2.아니오");
+                            alreadyAsk=true;
+                            Console.WriteLine($"이 아이템{itemsEquip[shopItemList[inputInt-1]].name}은(는) 착용할 수 없는 직업입니다. 그래도 구매하시겠습니까?\n1.예        2.아니오");
                             string input2;
                             while (true)
                             {
@@ -151,6 +154,7 @@ namespace ConsoleApp10
                         }
                         if (character.inventory.Contains(shopItemList[inputInt - 1]))
                         {
+                            alreadyAsk = true;
                             Console.WriteLine("이미 가지고있는 아이템입니다. 구매하시겠습니까?\n1.예      2.아니오");
                             string input2;
                             while (true)
@@ -161,7 +165,21 @@ namespace ConsoleApp10
                             }
                             if (input2 == "2") {Console.WriteLine("구매를 취소합니다");continue; }
                         }
-
+                        if (!alreadyAsk)
+                        {
+                            Console.WriteLine($"{itemsEquip[shopItemList[inputInt - 1]].name}을(를) 구매하시겠습니까?\n1.예      2.아니오");
+                            string input2;
+                            while (true)
+                            {
+                                input2= Console.ReadLine();
+                                if (input2 == "1" || input2 == "2") break;
+                                WrongMassage();
+                            }
+                            if (input2 == "2") { Console.WriteLine("구매를 취소합니다"); continue; }
+                        }
+                        character.inventory.Add(shopItemList[inputInt - 1]); character.money -= itemsEquip[shopItemList[inputInt - 1]].price;
+                        Console.WriteLine($"아이템을 구매하였습니다.\n남은 소지금 :{character.money}\n확인.아무키입력");
+                        Console.ReadLine();
                     }
                     else { Console.WriteLine("구매에 필요한 골드가 부족합니다"); }
                 }
